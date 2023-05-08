@@ -1,2 +1,3 @@
 env
 covelo/.env
+covelo/db.sqlite3
