@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from users.models import CustomUser
 from bicycles.models import Bicycle
 from stations.models import Station
@@ -16,13 +17,13 @@ class Rental(models.Model):
     )
 
     user = models.ForeignKey(
-        CustomUser, on_delete=models.DO_NOTHING, related_name='user_rental', default='')
+        CustomUser, on_delete=models.DO_NOTHING, related_name='user_rental')
     bicycle = models.ForeignKey(
-        Bicycle, on_delete=models.DO_NOTHING, related_name='bicycle_rental', default='')
+        Bicycle, on_delete=models.DO_NOTHING, related_name='bicycle_rental')
     status = models.CharField(
         max_length=50, choices=options, default='wait_for_comfirm')
     time_begin = models.DateTimeField(auto_now_add=True)
-    time_end = models.DateTimeField(default='', blank=True, null=True)
+    time_end = models.DateTimeField(blank=True, null=True)
     start_station = models.ForeignKey(
         Station, on_delete=models.DO_NOTHING, related_name='start_station_rental')
     end_station = models.ForeignKey(
