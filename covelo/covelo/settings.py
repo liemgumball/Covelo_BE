@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'users',
     'stations',
     'rentals',
+    'complaints',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_yasg',

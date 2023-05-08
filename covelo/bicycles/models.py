@@ -8,7 +8,7 @@ class BicycleStock(models.Model):
     date_created = models.DateTimeField(default=timezone.now)
     price_per_unit = models.FloatField()
     quantity = models.IntegerField()
-    description = models.CharField(max_length=500, blank=True)
+    description = models.TextField(max_length=1000, blank=True)
 
     def __str__(self) -> str:
         return self.brand + ' ' + self.model + ' ' + str(self.date_created.date())
