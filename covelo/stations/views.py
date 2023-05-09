@@ -10,12 +10,7 @@ class stationList(generics.ListAPIView):
     queryset = Station.objects.all()
     serializer_class = StationSerializer
 
-class station(generics.GenericAPIView):
+class station(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
-    def get(self, request, id):
-        try:
-            station = Station.objects.get(id=id)
-            serializer = StationDetailSerializer(station)
-            return Response(serializer.data)
-        except Station.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    serializer_class = StationDetailSerializer
+    queryset = Station.objects.all()
