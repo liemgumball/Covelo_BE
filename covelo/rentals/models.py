@@ -9,7 +9,6 @@ from stations.models import Station
 
 class Rental(models.Model):
     options = (
-        ('wait_for_comfirm', 'Wait for comfirm'),
         ('canceled', 'Canceled'),
         ('using', 'Using'),
         ('finished', 'Finished'),
@@ -21,13 +20,13 @@ class Rental(models.Model):
     bicycle = models.ForeignKey(
         Bicycle, on_delete=models.DO_NOTHING, related_name='bicycle_rental')
     status = models.CharField(
-        max_length=50, choices=options, default='wait_for_comfirm')
-    time_begin = models.DateTimeField(auto_now_add=True)
+        max_length=50, choices=options, default='using')
+    time_begin = models.DateTimeField(default=timezone.now)
     time_end = models.DateTimeField(blank=True, null=True)
     start_station = models.ForeignKey(
         Station, on_delete=models.DO_NOTHING, related_name='start_station_rental')
     end_station = models.ForeignKey(
-        Station, on_delete=models.DO_NOTHING, related_name='end_station_rental', null=True, blank=True)
+        Station, on_delete=models.DO_NOTHING, related_name='end_station_rental', null=True)
     is_violated = models.BooleanField(default=False)
 
     def __str__(self) -> str:

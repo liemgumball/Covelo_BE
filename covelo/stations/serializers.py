@@ -5,6 +5,11 @@ class LockerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locker
         fields = ['id','is_locked']
+
+class BikeLockerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Locker
+        feilds = ['bike']
     
 class StationDetailSerializer(serializers.ModelSerializer):
     lockers = LockerSerializer(many=True)
