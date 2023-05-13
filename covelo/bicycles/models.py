@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from stations.models import Locker
 
 # Create your models here.
 class BicycleStock(models.Model):
@@ -22,7 +23,9 @@ class Bicycle(models.Model):
     magnetic_key = models.CharField(max_length=100, unique=True, blank=True)
     status = models.CharField(max_length=20, choices=options, default='good')
     bicycle_stock = models.ForeignKey(BicycleStock, on_delete=models.SET_NULL, null=True)
+    locker = models.OneToOneField(Locker ,on_delete=models.SET_NULL, null=True, related_name='bike', blank=True)
 
     def __str__(self) -> str:
         return str(self.id)
-
+    def get_station(self):
+        return  self.locker.get_station()
