@@ -29,3 +29,6 @@ class Bicycle(models.Model):
         return str(self.id)
     def get_station(self):
         return  self.locker.get_station()
+    def set_locker_null(self):
+        self.locker = None
+        return self.locker
