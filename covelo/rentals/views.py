@@ -21,4 +21,30 @@ class createRental(generics.CreateAPIView):
                          'status': rental.status,
                          'time_begin': rental.time_begin,
                          'start_station': rental.start_station.id},
-                        status=status.HTTP_201_CREATED)
+                        status=status.HTTP_201_CREATED, headers=headers)
+
+
+class endRental(generics.UpdateAPIView):
+    queryset = Rental.objects.all()
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UpdateRentalSerializer
+    lookup_field = 'bicycle'
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+            return Response({'id': instance.id,
+                             'user_id': instance.user.id,
+                             'bicycle': instance.bicycle.id,
+                             'status': instance.status,
+                             'start_station': instance.start_station.id,
+                             'end_station': instance.end_station.id,
+                             'time_begin': instance.time_begin,
+                             'time_end': instance.time_end,
+                             'is_violated': instance.is_violated,
+                             'status': instance.status, },
+                            status=status.HTTP_200_OK)
+        return Response('error', status=status.HTTP_400_BAD_REQUEST)
