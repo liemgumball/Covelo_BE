@@ -4,4 +4,9 @@ from .models import *
 class BicycleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bicycle
-        fields = ['id']
+        fields = '__all__'
+
+class BicycleUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bicycle
+        fields = ['locker']
