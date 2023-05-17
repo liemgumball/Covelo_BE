@@ -5,6 +5,19 @@ from .models import *
 from .serializers import *
 # Create your views here.
 
+class listRentalsByUser(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RentalListSerializer
+    lookup_field = 'user'
+
+    def get_queryset(self):
+        user_id = self.kwargs['user']
+        return Rental.objects.filter(user=user_id)
+
+class detailRental(generics.RetrieveAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RentalDetailSerializer
+    queryset = Rental.objects.all()
 
 class createRental(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
