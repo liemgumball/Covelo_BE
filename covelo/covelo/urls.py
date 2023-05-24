@@ -40,4 +40,5 @@ urlpatterns = [
     path('station/', include('stations.urls')),
     path('rental/', include('rentals.urls')),
     path('complaint/', include('complaints.urls')),
+    path('notification/', include('notifications.urls')),
 ]

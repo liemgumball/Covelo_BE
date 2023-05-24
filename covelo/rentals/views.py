@@ -3,7 +3,9 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
+import requests, json
 # Create your views here.
+
 
 class listRentalsByUser(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
@@ -14,20 +16,50 @@ class listRentalsByUser(generics.ListAPIView):
         user_id = self.kwargs['user']
         return Rental.objects.filter(user=user_id)
 
+
 class detailRental(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = RentalDetailSerializer
     queryset = Rental.objects.all()
 
+
 class createRental(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CreateRentalSerializer
+
+    def send_notification_view(self):
+        expo_push_token = "ExponentPushToken[QPiataO0qw6ZYNeVSxoHT2]"
+        # self.send_notification(
+        #     "New message", "You have a new message", {}, expo_push_token)
+        self.send_push_notification(expo_push_token)
+        # return Response("Notification sent")
+
+    def send_push_notification(self, expo_push_token):
+        message = {
+            'to': expo_push_token,
+            'sound': 'default',
+            'title': 'Original Title',
+            'body': 'And here is the body!',
+            'data': {'someData': 'goes here'}
+        }
+
+        headers = {
+            'Accept': 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(
+            'https://exp.host/--/api/v2/push/send', headers=headers, json=message)
+        response.raise_for_status()  # Raises an exception if the request was not successful
+        return Response(response.json())
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rental = serializer.save()
         headers = self.get_success_headers(serializer.data)
+        self.send_notification_view()
         return Response({'id': rental.id,
                          'user': rental.user.id,
                          'bicycle': rental.bicycle.id,
