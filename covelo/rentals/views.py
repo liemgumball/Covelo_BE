@@ -3,7 +3,8 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-import requests, json
+import requests
+import json
 # Create your views here.
 
 
@@ -27,20 +28,23 @@ class createRental(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CreateRentalSerializer
 
-    def send_notification_view(self):
-        expo_push_token = "ExponentPushToken[QPiataO0qw6ZYNeVSxoHT2]"
-        # self.send_notification(
-        #     "New message", "You have a new message", {}, expo_push_token)
-        self.send_push_notification(expo_push_token)
-        # return Response("Notification sent")
-
-    def send_push_notification(self, expo_push_token):
+    def send_push_notification(self, request, rental):
+        user_id =  rental.user.id
+        expo_push_token = request.session['user_{user_id}']
+        expo_push_token = json.dumps(expo_push_token)
+        expo_push_token = json.loads(expo_push_token)
         message = {
             'to': expo_push_token,
             'sound': 'default',
-            'title': 'Original Title',
+            'title': 'Test Push Notification',
             'body': 'And here is the body!',
-            'data': {'someData': 'goes here'}
+            'data': {'id': rental.id,
+                     'user': rental.user.id,
+                     'bicycle': rental.bicycle.id,
+                     'start_station': rental.start_station.id,
+                     'time_begin': rental.time_begin.isoformat(),
+                     'status': rental.status,
+                     }
         }
 
         headers = {
@@ -53,13 +57,14 @@ class createRental(generics.CreateAPIView):
             'https://exp.host/--/api/v2/push/send', headers=headers, json=message)
         response.raise_for_status()  # Raises an exception if the request was not successful
         return Response(response.json())
+        # return expo_push_token
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rental = serializer.save()
         headers = self.get_success_headers(serializer.data)
-        self.send_notification_view()
+        self.send_push_notification(request, rental)
         return Response({'id': rental.id,
                          'user': rental.user.id,
                          'bicycle': rental.bicycle.id,
