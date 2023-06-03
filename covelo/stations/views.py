@@ -14,3 +14,8 @@ class station(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = StationDetailSerializer
     queryset = Station.objects.all()
+
+class updateLocker(generics.UpdateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = LockerSerializer
+    queryset = Locker.objects.all()

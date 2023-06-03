@@ -61,7 +61,10 @@ class BicycleUpdate(generics.UpdateAPIView):
             instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            if instance.locker is not None:
+            locker = instance.get_locker()
+            if locker is not None:
+                locker.is_locked = True
+                locker.save()
                 return Response({
                     'id': instance.id,
                     'locker_id': instance.locker.id,
@@ -75,15 +78,8 @@ class BicycleUpdate(generics.UpdateAPIView):
         else:
             return Response({"message": "Failed", "details": serializer.errors})
         
-# class UsingBicycleList(generics.ListAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = BicycleSerializer
-#     filter_backends = [SearchFilter]
-#     search_fields = ['status']
-
-#     def get_queryset(self):
-#         status = self.request.query_params.get('status')
-#         queryset = Bicycle.objects.all()
-#         if status:
-#             queryset = queryset.filter(status=status)
-#         return queryset
+class UsingBicycleList(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BicycleSerializer
+    lookup_field = 'locker'
+    queryset = Bicycle.objects.filter(locker__isnull=True)

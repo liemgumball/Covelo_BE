@@ -1,4 +1,5 @@
 from rest_framework import generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.authtoken.models import Token
@@ -7,6 +8,8 @@ from .serializers import *
 from .models import CustomUser
 from rest_framework.decorators import api_view
 import json
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 
 class UserRegistration(generics.CreateAPIView):
@@ -34,29 +37,64 @@ class UserLogin(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def save_user_token(request):
-    """
-    Example {
-    "user_id" : "1",
-    "fcm_token" : "aldkjaldkaj"
-    }
-    """
-    if request.method == 'POST':
+class UserTokenAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, user_id):
+        response = request.session.get(f'user_{user_id}_token')
+        response = json.dumps(response)
+        response = json.loads(response)
+        return Response({"fcm_token": response}, status=status.HTTP_200_OK)
+
+
+class UserTokenSaveAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='User ID'
+                ),
+                'fcm_token': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Token used to push notification'
+                )
+            }
+        )
+    )
+    def post(self, request):
         user_id = request.data.get('user_id')
         token = request.data.get('fcm_token')
         # Lưu thông tin vào session
-        request.session['user_{user_id}'] = token
-        response = request.session['user_{user_id}']
-        response = json.dumps(response)
-        return Response({"fcm_token": json.loads(response)}, status=status.HTTP_201_CREATED)
-    return Response('errors', status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-def get_user_token(request, user_id):
-    if request.method == 'GET':
-        response = request.session['user_{user_id}']
-        response = json.dumps(response)
-        return Response({"fcm_token": json.loads(response)}, status=status.HTTP_200_OK)
-    return Response('errors', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            request.session[f'user_{user.id}_token'] = token
+            request.session.modified = True
+            response = request.session.get(f'user_{user.id}_token')
+            response = json.dumps(response)
+            response = json.loads(response)
+            return Response({"Status": "successed", "fcm_token": response}, status=status.HTTP_201_CREATED)
+        except:
+            return Response({'error': 'User not existed'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='User ID'
+                ),
+            }
+        )
+    )
+    def delete(self, request):
+        user_id = request.data.get('user_id')
+        if f'user_{user_id}_token'in request.session:
+            del request.session[f'user_{user_id}_token']
+            request.session.modified = True
+            return Response({'message': 'FCM token deleted from session'})
+        else:
+            return Response({'error': 'FCM token not found in session'})

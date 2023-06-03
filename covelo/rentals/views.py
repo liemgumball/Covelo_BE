@@ -30,23 +30,19 @@ class createRental(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = CreateRentalSerializer
 
-    def send_push_notification(self, request, rental):
-        user_id =  rental.user.id
+    def send_push_notification(self, request, rental, expo_push_token):
         try:
-            expo_push_token = request.session['user_{user_id}']
-            expo_push_token = json.dumps(expo_push_token)
-            expo_push_token = json.loads(expo_push_token)
             message = {
                 'to': expo_push_token,
                 'sound': 'default',
-                'title': 'Test Push Notification',
-                'body': 'And here is the body!',
+                'title': 'Bắt đầu thuê xe!',
+                'body': 'Nhấn để xem thông tin',
                 'data': {'id': rental.id,
-                        'user': rental.user.id,
-                        'bicycle': rental.bicycle.id,
-                        'start_station': rental.start_station.id,
-                        'time_begin': rental.time_begin.isoformat(),
-                        'status': rental.status,
+                         'user': rental.user.id,
+                         'bicycle': rental.bicycle.id,
+                         'start_station': rental.start_station.id,
+                         'time_begin': rental.time_begin.isoformat(),
+                         'status': rental.status,
                         }
             }
 
@@ -66,15 +62,32 @@ class createRental(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        rental = serializer.save()
+        user_id = serializer.validated_data['user'].id
+        bicycle = serializer.validated_data['bicycle']
+        expo_push_token = request.session.get(f'user_{user_id}_token')
+        expo_push_token = json.dumps(expo_push_token)
+        expo_push_token = json.loads(expo_push_token)
+        print('expo_push_token',expo_push_token)
+        if bicycle.locker:
+            if expo_push_token is not None:
+                locker = bicycle.get_locker()
+                locker.is_locked = False
+                locker.save()
+                bicycle.set_locker_null()
+                bicycle.save()
+                instance = serializer.save()
+                self.send_push_notification(request, instance, expo_push_token)
+            else:
+                return Response({'error': 'FCM token is missing or empty.'}, status=400)
+        else:
+            return Response({'error': 'Bicycle is not available or is not locked'}, status=400)
         headers = self.get_success_headers(serializer.data)
-        self.send_push_notification(request, rental)
-        return Response({'id': rental.id,
-                         'user': rental.user.id,
-                         'bicycle': rental.bicycle.id,
-                         'status': rental.status,
-                         'time_begin': rental.time_begin,
-                         'start_station': rental.start_station.id},
+        return Response({'id': instance.id,
+                         'user': instance.user.id,
+                         'bicycle': instance.bicycle.id,
+                         'status': instance.status,
+                         'time_begin': instance.time_begin,
+                         'start_station': instance.start_station.id},
                         status=status.HTTP_201_CREATED, headers=headers)
 
 
@@ -84,12 +97,55 @@ class endRental(generics.UpdateAPIView):
     serializer_class = UpdateRentalSerializer
     lookup_field = 'bicycle'
 
+    def send_push_notification(self, request, rental, expo_push_token):
+        try:
+            message = {
+                'to': expo_push_token,
+                'sound': 'default',
+                'title': 'Kết thúc chuyến xe!',
+                'body': 'Nhấn để xem thông tin',
+                'data': {'id': rental.id,
+                         'user': rental.user.id,
+                         'bicycle': rental.bicycle.id,
+                         'start_station': rental.start_station.id,
+                         'end_station': rental.end_station.id,
+                         'time_begin': rental.time_begin.isoformat(),
+                         'time_end': rental.time_end.isoformat(),
+                         'status': rental.status,
+                         'is_violated': rental.is_violated,
+                         }
+            }
+
+            headers = {
+                'Accept': 'application/json',
+                'Accept-encoding': 'gzip, deflate',
+                'Content-Type': 'application/json'
+            }
+
+            response = requests.post(
+                'https://exp.host/--/api/v2/push/send', headers=headers, json=message)
+            response.raise_for_status()  # Raises an exception if the request was not successful
+            return Response(response.json())
+        except:
+            return Response("Failed to send: no fcm_token in session")
+
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(
             instance, data=request.data, partial=True)
+        # print("instance----------------",instance.user.id)
         if serializer.is_valid():
             instance = serializer.save()
+            # try:
+            user_id = instance.user.id
+            expo_push_token = request.session.get(f'user_{user_id}_token')
+            expo_push_token = json.dumps(expo_push_token)
+            expo_push_token = json.loads(expo_push_token)
+            # print("Push token++++++++++++++++++++", expo_push_token)
+            if expo_push_token is not None:
+                self.send_push_notification(request, instance, expo_push_token)
+            else:
+                return Response({'error': 'Updated but FCM token is missing or empty.'}, status=400)
             return Response({'id': instance.id,
                              'user_id': instance.user.id,
                              'bicycle': instance.bicycle.id,
@@ -99,13 +155,14 @@ class endRental(generics.UpdateAPIView):
                              'time_begin': instance.time_begin,
                              'time_end': instance.time_end,
                              'is_violated': instance.is_violated,
-                             'status': instance.status, },
+                             'status': instance.status,},
                             status=status.HTTP_200_OK)
         return Response('error', status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class usingListBicycle(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = UsingBicycleListSerializer
+    serializer_class = RentalListSerializer
     filter_backends = [SearchFilter]
     search_fields = ['status']
 

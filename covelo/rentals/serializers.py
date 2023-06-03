@@ -12,16 +12,14 @@ class RentalListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rental
         fields = ['id', 'bicycle', 'status', 'time_begin', 'is_violated']
-class UsingBicycleListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rental
-        fields = ['bicycle']
+
 
 
 class CreateRentalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rental
         fields = ['user', 'bicycle', 'start_station']
+
 
 class UpdateRentalSerializer(serializers.ModelSerializer):
     time_end = serializers.DateTimeField(default=timezone.now)
