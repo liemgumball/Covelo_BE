@@ -26,7 +26,7 @@ class Bicycle(models.Model):
     locker = models.OneToOneField(Locker ,on_delete=models.SET_NULL, null=True, related_name='bike', blank=True)
 
     def __str__(self) -> str:
-        return str(self.id)
+        return str(self.id) + " " + self.status
     def get_station(self):
         return  self.locker.get_station()
     def set_locker_null(self):

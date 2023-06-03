@@ -1,14 +1,16 @@
 from django.shortcuts import render
 from rest_framework import generics, status, permissions
+from rest_framework.permissions import AllowAny 
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
+from rest_framework.filters import SearchFilter
 # Create your views here.
 
 
 class BicycleDetail(generics.RetrieveAPIView):
     queryset = Bicycle.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     serializer_class = BicycleSerializer
 
     def get(self, request, *args, **kwargs):
@@ -28,7 +30,7 @@ class BicycleDetail(generics.RetrieveAPIView):
 
 class BicycleDetailByMagneticKey(generics.RetrieveAPIView):
     queryset = Bicycle.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     serializer_class = BicycleSerializer
     lookup_field = 'magnetic_key'
 
@@ -49,7 +51,7 @@ class BicycleDetailByMagneticKey(generics.RetrieveAPIView):
 
 class BicycleUpdate(generics.UpdateAPIView):
     queryset = Bicycle.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     serializer_class = BicycleUpdateSerializer
     lookup_field = 'magnetic_key'
 
@@ -72,3 +74,16 @@ class BicycleUpdate(generics.UpdateAPIView):
                     status=status.HTTP_200_OK)
         else:
             return Response({"message": "Failed", "details": serializer.errors})
+        
+# class UsingBicycleList(generics.ListAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = BicycleSerializer
+#     filter_backends = [SearchFilter]
+#     search_fields = ['status']
+
+#     def get_queryset(self):
+#         status = self.request.query_params.get('status')
+#         queryset = Bicycle.objects.all()
+#         if status:
+#             queryset = queryset.filter(status=status)
+#         return queryset
