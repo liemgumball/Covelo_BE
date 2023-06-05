@@ -30,4 +30,4 @@ class Rental(models.Model):
     is_violated = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return self.user.__str__() + ' ' + str(self.id) + ' ' + str(self.status)
+        return str(self.id) + ' ' + self.user.__str__() + "--------------Status:" + str(self.status) + "----------Bicycle:" + str(self.bicycle.id)

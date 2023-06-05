@@ -62,14 +62,12 @@ class createRental(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user_id = serializer.validated_data['user'].id
+        user = serializer.validated_data['user']
         bicycle = serializer.validated_data['bicycle']
-        expo_push_token = request.session.get(f'user_{user_id}_token')
-        expo_push_token = json.dumps(expo_push_token)
-        expo_push_token = json.loads(expo_push_token)
-        print('expo_push_token',expo_push_token)
         if bicycle.locker:
-            if expo_push_token is not None:
+            try:
+                expo_push_token = user.fcmtoken.fcm_token
+            # if expo_push_token is not None:
                 locker = bicycle.get_locker()
                 locker.is_locked = False
                 locker.save()
@@ -77,7 +75,7 @@ class createRental(generics.CreateAPIView):
                 bicycle.save()
                 instance = serializer.save()
                 self.send_push_notification(request, instance, expo_push_token)
-            else:
+            except:
                 return Response({'error': 'FCM token is missing or empty.'}, status=400)
         else:
             return Response({'error': 'Bicycle is not available or is not locked'}, status=400)
@@ -92,10 +90,16 @@ class createRental(generics.CreateAPIView):
 
 
 class endRental(generics.UpdateAPIView):
-    queryset = Rental.objects.all()
     permission_classes = [AllowAny]
     serializer_class = UpdateRentalSerializer
-    lookup_field = 'bicycle'
+    def get_object(self):
+        attribute_value = self.kwargs.get('bicycle')
+        instance = Rental.objects.filter(bicycle=attribute_value, status="using")
+        if instance.exists():
+            return instance.first()
+        else:
+            # return Response({'error': 'Rental not found.'}, status=404)
+            return None
 
     def send_push_notification(self, request, rental, expo_push_token):
         try:
@@ -131,20 +135,17 @@ class endRental(generics.UpdateAPIView):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=True)
-        # print("instance----------------",instance.user.id)
+        if instance is not None:
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+        else:
+            return Response({'error': 'Rental not found.'}, status=404)
         if serializer.is_valid():
             instance = serializer.save()
-            # try:
-            user_id = instance.user.id
-            expo_push_token = request.session.get(f'user_{user_id}_token')
-            expo_push_token = json.dumps(expo_push_token)
-            expo_push_token = json.loads(expo_push_token)
-            # print("Push token++++++++++++++++++++", expo_push_token)
-            if expo_push_token is not None:
+            try:
+                expo_push_token = instance.user.fcmtoken.fcm_token
+            # if expo_push_token is not None:
                 self.send_push_notification(request, instance, expo_push_token)
-            else:
+            except:
                 return Response({'error': 'Updated but FCM token is missing or empty.'}, status=400)
             return Response({'id': instance.id,
                              'user_id': instance.user.id,

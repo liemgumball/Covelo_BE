@@ -19,7 +19,7 @@ class Locker(models.Model):
         Station, on_delete=models.SET_NULL, null=True, related_name='lockers')
 
     def __str__(self) -> str:
-        return self.station.__str__() + " " + str(self.id) + " " + str(self.is_locked)
+        return self.station.__str__() + " " + str(self.id) + " " + "locked" if self.is_locked else "unlocked"
 
     def get_station(self):
         return self.station
