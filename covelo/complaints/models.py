@@ -2,6 +2,7 @@ from django.db import models
 from rentals.models import Rental
 from bicycles.models import Bicycle
 from stations.models import Station
+from users.models import CustomUser
 
 # Create your models here.
 
@@ -12,6 +13,7 @@ class Complaint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(null=True, blank=True)
     is_solved = models.BooleanField(default=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return self.title + ' ' + 'solved' if self.is_solved else 'unsolved'

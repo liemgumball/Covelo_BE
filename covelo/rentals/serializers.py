@@ -14,7 +14,6 @@ class RentalListSerializer(serializers.ModelSerializer):
         fields = ['id', 'bicycle', 'status', 'time_begin', 'is_violated']
 
 
-
 class CreateRentalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rental
@@ -25,7 +24,6 @@ class UpdateRentalSerializer(serializers.ModelSerializer):
     time_end = serializers.DateTimeField(default=timezone.now)
     end_station_id = serializers.IntegerField(required=True)
     status = serializers.CharField(default='finished')
-    # is_violated = serializers.BooleanField(default=False)
 
     class Meta:
         model = Rental

@@ -4,7 +4,7 @@ from .models import *
 class LockerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locker
-        fields = ['id','is_locked']
+        fields = ['id','is_locked','bike']
 
 class BikeLockerSerializer(serializers.ModelSerializer):
     class Meta:

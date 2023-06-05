@@ -51,7 +51,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
 class FCMToken(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="fcmtoken")
-    fcm_token = models.CharField(max_length=100, unique=True, default='')
+    fcm_token = models.CharField(max_length=100, default='')
 
     def __str__(self) -> str:
         return str(self.user.id) + " " + self.fcm_token
